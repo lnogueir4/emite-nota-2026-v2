@@ -1,0 +1,11 @@
+.venv
+__pycache__
+*.pyc
+.env
+.git
+.gitignore
+input/
+output/
+old/
+Vendas-estudio-new.xlsx
+Vendas-estudio.xlsx
