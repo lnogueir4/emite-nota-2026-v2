@@ -12,7 +12,7 @@ Fluxo: WhatsApp → Evolution API → n8n → FastAPI `/webhook` (texto bruto em
 
 O código roda em duas máquinas fisicamente separadas, que compartilham apenas o banco PostgreSQL (schema `estudio_2026`):
 
-- **Servidor (Docker Swarm / Easypanel)**: um único container; o `start.sh` sobe `uvicorn api:app` na porta 8502 em background e `streamlit run app_revisao.py` na 8501 em foreground. O painel de revisão (Streamlit) fica em https://emite-nota.3gsuic.easypanel.host/. As variáveis de ambiente vêm da configuração do serviço no Swarm, não do `.env` (o `.env` está no `.dockerignore`).
+- **Servidor (Docker Swarm / Easypanel)**: um único container; o `start.sh` sobe `uvicorn api:app` na porta 8502 em background e `streamlit run app_revisao.py` na 8501 em foreground. O painel de revisão (Streamlit) fica em https://emite-nota.xyz.easypanel.host/. As variáveis de ambiente vêm da configuração do serviço no Swarm, não do `.env` (o `.env` está no `.dockerignore`).
 - **PC Windows da Andrea**: `emitir_client.py` + `src/automation/nfse_emitter.py` + scripts de calibração. Conecta ao banco do servidor por túnel SSH (`DATABASE_URL=...@localhost:3999/n8n` num `.env` local). O PyAutoGUI precisa de uma tela real, então a emissão nunca pode rodar no servidor.
 
 O `emitir_client.py` define propositalmente suas próprias cópias mínimas dos modelos ORM `Venda`/`Cliente`, em vez de importar `src/database/db_manager.py`. Ao alterar o schema de `vendas` ou `clientes`, atualize juntos `db_manager.py`, `emitir_client.py` e `migrations/schema_consolidado.sql`.
