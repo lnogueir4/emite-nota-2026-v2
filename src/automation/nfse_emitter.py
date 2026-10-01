@@ -37,18 +37,14 @@ class NFSeEmitter:
             import pyautogui
             import pyperclip
 
-            pyautogui.PAUSE = 1.0
-
-            pyautogui.press("winleft")
-            pyautogui.write("chrome")
-            pyautogui.press("enter")
+            pyautogui.PAUSE = 0.8
 
             response = pyautogui.confirm(
-                "O robô vai começar.\n\n"
+                "O robô vai começar a emissão das NFSe.\n\n"
                 "REQUISITOS:\n"
-                "- Usar zoom 50% no navegador\n"
-                "- Não mexer no mouse/teclado\n\n"
-                "Clique em OK para continuar ou Cancelar para abortar.",
+                "- Zoom do Chrome em 50%\n"
+                "- Não mexer no mouse/teclado durante a automação\n\n"
+                "Clique em OK para iniciar ou Cancelar para abortar.",
                 title="Automação NFSe"
             )
 
@@ -56,11 +52,20 @@ class NFSeEmitter:
                 self._log("Automação cancelada pelo usuário")
                 return False
 
-            pyautogui.hotkey('ctrl', 't')
+            # Abre/Foca o Chrome via tecla Windows
+            pyautogui.press("winleft")
+            time.sleep(0.4)
+            pyautogui.write("chrome")
+            pyautogui.press("enter")
+            time.sleep(1.5)
+
+            # Foca a barra de endereço com Ctrl+L
+            pyautogui.hotkey('ctrl', 'l')
+            time.sleep(0.3)
             pyperclip.copy(NFSE_PORTAL_URL)
             pyautogui.hotkey('ctrl', 'v')
             pyautogui.press("enter")
-            time.sleep(5)
+            time.sleep(4)
 
             return True
         except ImportError:
@@ -80,13 +85,18 @@ class NFSeEmitter:
             self._preencher_dados_basicos(venda, pyautogui, pyperclip)
             self._preencher_servico(venda, pyautogui, pyperclip)
             self._preencher_valores(venda, pyautogui, pyperclip)
-            sucesso, num_nota = self._finalizar_emissao(pyautogui)
+            sucesso, num_nota = self._finalizar_emissao(pyautogui, venda)
 
             if sucesso:
                 self._preparar_proxima(pyautogui)
 
             return sucesso, num_nota
 
+        except pyautogui.FailSafeException:
+            # Mouse levado ao canto superior esquerdo: interrompe toda a automação
+            self._abort = True
+            self._log("Automação interrompida (mouse no canto da tela).")
+            return False, None
         except Exception as e:
             self._log(f"Erro ao emitir: {e}")
             return False, None
@@ -95,6 +105,10 @@ class NFSeEmitter:
         coord = self.coordinates
 
         time.sleep(3)
+
+        if "ibs_cbs_opcao" in coord:
+            pyautogui.click(*coord["ibs_cbs_opcao"])
+            pyautogui.press('tab')
 
         pyautogui.click(*coord["data_competencia"])
         pyperclip.copy(venda['data_emissao'])
@@ -107,9 +121,15 @@ class NFSeEmitter:
         pyautogui.press('tab')
 
         pyautogui.click(*coord["regime_apuracao"])
+        time.sleep(0.3)
         pyautogui.press('down')
+        time.sleep(0.2)
         pyautogui.press('enter')
         pyautogui.press('tab')
+
+        # Rola a tela até o final antes de interagir com os campos do Tomador
+        pyautogui.scroll(SCROLL_AMOUNT)
+        time.sleep(0.5)
 
         pyautogui.click(*coord["tomador_servico_brasil"])
 
@@ -117,8 +137,8 @@ class NFSeEmitter:
         pyperclip.copy(venda['CPF'])
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('tab')
-
-        pyautogui.scroll(SCROLL_AMOUNT)
+        # Aguarda o portal consultar o CPF e preencher Nome/Razão Social antes de seguir
+        time.sleep(2)
 
         pyautogui.click(*coord["email_field"])
         pyperclip.copy(venda['EMAIL'])
@@ -147,15 +167,16 @@ class NFSeEmitter:
 
         pyautogui.click(*coord["nao_incidencia_issqn"])
 
-        pyautogui.click(*coord["descricao_servico"])
-        pyperclip.copy(venda['DESCRICAO'])
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('tab')
-
+        # Item da NBS vem ANTES da Descrição do Serviço
         pyautogui.click(*coord["nbs_field"])
         pyperclip.copy(self.nbs)
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
+        pyautogui.press('tab')
+
+        pyautogui.click(*coord["descricao_servico"])
+        pyperclip.copy(venda['DESCRICAO'])
+        pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('tab')
         pyautogui.scroll(SCROLL_AMOUNT)
 
@@ -172,7 +193,8 @@ class NFSeEmitter:
         pyautogui.press("tab")
 
         pyautogui.click(*coord["nao_retencao_issqn"])
-        pyautogui.scroll(-700)
+        pyautogui.scroll(SCROLL_AMOUNT)
+        time.sleep(0.5)
 
         pyautogui.click(*coord["situacao_tributaria"])
         pyperclip.copy("00")
@@ -198,22 +220,41 @@ class NFSeEmitter:
         pyautogui.click(*coord["botao_avancar_3"])
         time.sleep(PAGE_TRANSITION_DELAY)
 
-    def _finalizar_emissao(self, pyautogui) -> tuple:
+    def _finalizar_emissao(self, pyautogui, venda: dict) -> tuple:
         coord = self.coordinates
 
         pyautogui.scroll(-1000)
         pyautogui.scroll(-400)
-
-        time.sleep(3)
-        pyautogui.click(*coord["botao_emitir"])
-        time.sleep(PAGE_TRANSITION_DELAY)
-
-        sucesso = True
-        num_nota = None
-
         time.sleep(2)
 
-        return sucesso, num_nota
+        # Clica no botão emitir
+        self._log("Clicando no botão Emitir NFSe...")
+        pyautogui.click(*coord["botao_emitir"])
+
+        # Aguarda 6 segundos a resposta do portal do governo
+        self._log("Aguardando portal processar a emissão (6s)...")
+        time.sleep(6)
+
+        # POPUP ÚNICO DE VALIDAÇÃO DA EMISSÃO
+        resp = pyautogui.confirm(
+            text=(
+                f"VALIDAÇÃO DE EMISSÃO DA NOTA FISCAL:\n\n"
+                f"Cliente: {venda.get('RAZAO', '')}\n"
+                f"CPF: {venda.get('CPF', '')}\n"
+                f"Valor: R$ {float(venda.get('VALOR', 0)):.2f}\n\n"
+                "A nota fiscal foi EMITIDA COM SUCESSO no portal do governo?\n\n"
+                "Clique em 'Sim, Emitida' para salvar no banco e ir para a próxima nota."
+            ),
+            title="Confirmação de Emissão NFSe",
+            buttons=["Sim, Emitida", "Não / Parar Automação"]
+        )
+
+        if resp == "Sim, Emitida":
+            return True, None
+        else:
+            self._abort = True
+            self._log("Emissão não confirmada ou interrompida pelo usuário.")
+            return False, None
 
     def _preparar_proxima(self, pyautogui):
         coord = self.coordinates

@@ -126,7 +126,7 @@ Todos os endpoints exigem o header `x-api-secret`.
 
 ## Painel de Revisão (Streamlit)
 
-Acesse via `https://app-notas.SEU_DOMINIO` (porta 8501).
+Acesse via **https://emite-nota.3gsuic.easypanel.host/** (porta 8501 do container).
 
 - Exibe todas as vendas extraídas pela IA com status `aguardando_aprovacao`
 - Permite editar manualmente qualquer campo antes de aprovar

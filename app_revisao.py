@@ -7,8 +7,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from src.database.db_manager import SessionLocal, VendaPendente, Cliente, Venda
 from src.processors.cpf_validator import CPFValidator
+from src.processors.email_validator import EmailValidator
 
 load_dotenv()
+
+validador_email = EmailValidator()
 
 USER = os.getenv("STREAMLIT_USER")
 PASS = os.getenv("STREAMLIT_PASSWORD")
@@ -76,6 +79,9 @@ else:
                 cpf = st.text_input("CPF", value=str(p.cpf) if p.cpf else "", key=f"cpf_{p.id}")
                 nome = st.text_input("Nome", value=str(p.nome) if p.nome else "", key=f"nome_{p.id}")
                 email = st.text_input("E-mail", value=str(p.email) if p.email else "", key=f"email_{p.id}")
+                if email.strip() and not validador_email.validate(email):
+                    sugestao = validador_email.sugestao(email)
+                    st.warning(f"E-mail inválido. Seria {sugestao}?" if sugestao else "E-mail inválido (use um único endereço).")
             with col2:
                 profissao = st.text_input("Profissão", value=str(p.profissao) if p.profissao else "", key=f"prof_{p.id}")
                 aniversario = st.text_input("Aniversário", value=str(p.aniversario) if p.aniversario else "", key=f"aniv_{p.id}")
@@ -97,7 +103,10 @@ else:
                     validador = CPFValidator()
                     if not validador.validate(cpf):
                         st.error("CPF inválido! Por favor corrija o CPF antes de aprovar.")
+                    elif email.strip() and not validador_email.validate(email):
+                        st.error("E-mail inválido! Por favor corrija o e-mail antes de aprovar.")
                     else:
+                        email = validador_email.clean(email)
                         cliente = session.query(Cliente).filter(Cliente.cpf == cpf).first()
                         if not cliente:
                             cliente = Cliente(cpf=cpf, nome=nome, email=email, profissao=profissao, aniversario=aniversario, como_conheceu=como_conheceu)

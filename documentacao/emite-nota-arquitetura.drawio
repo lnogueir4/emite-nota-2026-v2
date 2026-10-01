@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram name="Page-1">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- ==================== ZONE 1: EXTERNAL / CLIENTS ==================== -->
+        <mxCell id="sw1" value="Serviços Externos / Clientes" style="swimlane;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;align=center;horizontal=1;childLayout=flowLayout;portConstraint=none;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="320" height="880" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_whatsapp" value="WhatsApp (Andrea)" style="dashed=0;outlineConnect=0;html=1;align=center;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;shape=mxgraph.weblogos.whatsapp;fillColor=#00E676;strokeColor=#dddddd;" vertex="1" parent="sw1">
+          <mxGeometry x="120" y="60" width="80" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_llm" value="&lt;b&gt;LLM APIs&lt;/b&gt;&lt;br/&gt;• OpenAI API (GPT-4o)&lt;br/&gt;• Gemini API (Flash/Pro)&lt;br/&gt;• Groq API (Llama-3)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#402c4f;align=left;spacingLeft=10;verticalAlign=top;spacingTop=8;" vertex="1" parent="sw1">
+          <mxGeometry x="70" y="340" width="180" height="110" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_gov" value="&lt;b&gt;Portal NFSe Governo&lt;/b&gt;&lt;br/&gt;(Interface de Emissão de Nota)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#602422;" vertex="1" parent="sw1">
+          <mxGeometry x="90" y="700" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ZONE 2: CLOUD SERVER ==================== -->
+        <mxCell id="sw2" value="Servidor Cloud (Docker Swarm)" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1565c0;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="410" y="50" width="400" height="880" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_evolution" value="&lt;b&gt;Evolution API&lt;/b&gt;&lt;br/&gt;(Gateway WhatsApp)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#2e7d32;" vertex="1" parent="sw2">
+          <mxGeometry x="40" y="60" width="140" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_n8n" value="&lt;b&gt;n8n Workflows&lt;/b&gt;" style="shape=image;html=1;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=https://unpkg.com/@lobehub/icons-static-svg@1.91.0/icons/n8n-color.svg;" vertex="1" parent="sw2">
+          <mxGeometry x="270" y="60" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Docker Swarm Container -->
+        <mxCell id="container_docker" value="Docker Swarm Services (Container: n8n_emite-nota)" style="swimlane;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;fontColor=#b56e00;fontStyle=1;" vertex="1" parent="sw2">
+          <mxGeometry x="30" y="200" width="340" height="300" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_fastapi" value="&lt;b&gt;FastAPI Web API&lt;/b&gt;&lt;br/&gt;api.py (Port 8502)&lt;br/&gt;&lt;i&gt;Webhook receiver &amp;amp; extraction trigger&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1565c0;fontColor=#0d47a1;" vertex="1" parent="container_docker">
+          <mxGeometry x="20" y="50" width="130" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_streamlit" value="&lt;b&gt;Streamlit Dashboard&lt;/b&gt;&lt;br/&gt;app_revisao.py (Port 8501)&lt;br/&gt;&lt;i&gt;Painel de Revisão e Aprovação&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#2e7d32;fontColor=#1b5e20;" vertex="1" parent="container_docker">
+          <mxGeometry x="190" y="50" width="130" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_process" value="&lt;b&gt;n8n Aggregation Controller&lt;/b&gt;&lt;br/&gt;POST /process-buffer (auto / force)&lt;br/&gt;• 15-minute wait window for grouping" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#5d4037;" vertex="1" parent="container_docker">
+          <mxGeometry x="20" y="190" width="300" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_postgres" value="&lt;b&gt;PostgreSQL Database&lt;/b&gt;&lt;br/&gt;(Schema: estudio_2026)&lt;br/&gt;&lt;br/&gt;• mensagens_buffer&lt;br/&gt;• vendas_pendentes&lt;br/&gt;• clientes&lt;br/&gt;• vendas" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#2e7d32;fontColor=#1b5e20;align=left;spacingLeft=15;verticalAlign=top;spacingTop=35;" vertex="1" parent="sw2">
+          <mxGeometry x="110" y="550" width="180" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ZONE 3: LOCAL WINDOWS PC ==================== -->
+        <mxCell id="sw3" value="Local (Andrea's Windows PC)" style="swimlane;startSize=30;fillColor=#efebe9;strokeColor=#4e342e;fontColor=#3e2723;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="850" y="50" width="320" height="880" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_user" value="Andrea (User)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#eceff1;strokeColor=#607d8b;" vertex="1" parent="sw3">
+          <mxGeometry x="140" y="60" width="40" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_chrome" value="Google Chrome" style="shape=image;html=1;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=https://cdn.simpleicons.org/googlechrome;" vertex="1" parent="sw3">
+          <mxGeometry x="130" y="200" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_emitir_client" value="&lt;b&gt;emitir_client.py&lt;/b&gt;&lt;br/&gt;(PyAutoGUI Automation)&lt;br/&gt;• Monitor: 100% scale&lt;br/&gt;• Chrome: 50% zoom" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f57c00;fontColor=#e65100;" vertex="1" parent="sw3">
+          <mxGeometry x="90" y="380" width="140" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="node_ssh_tunnel" value="&lt;b&gt;SSH Tunnel&lt;/b&gt;&lt;br/&gt;L:3999 -&amp;gt; localhost:3999&lt;br/&gt;(Acesso seguro ao DB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#c62828;fontColor=#b71c1c;" vertex="1" parent="sw3">
+          <mxGeometry x="90" y="550" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EDGES / ROUTING ==================== -->
+        <!-- WhatsApp -> Evolution API -->
+        <mxCell id="edge_wa_evo" value="Mensagem" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#00E676;strokeWidth=2;flowAnimation=1;" edge="1" parent="1" source="node_whatsapp" target="node_evolution">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Evolution API -> n8n -->
+        <mxCell id="edge_evo_n8n" value="Webhook" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2e7d32;strokeWidth=2;" edge="1" parent="1" source="node_evolution" target="node_n8n">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- n8n -> FastAPI POST /webhook -->
+        <mxCell id="edge_n8n_fastapi" value="POST /webhook&lt;br/&gt;(Salva bruto)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="node_n8n" target="node_fastapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- FastAPI -> DB raw insert -->
+        <mxCell id="edge_fastapi_db_raw" value="Salva msg bruta" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;strokeColor=#1565c0;" edge="1" parent="1" source="node_fastapi" target="node_postgres">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- n8n -> Process Controller -->
+        <mxCell id="edge_n8n_process" value="POST /process-buffer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="node_n8n" target="node_process">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Process Controller -> FastAPI -->
+        <mxCell id="edge_process_fastapi" value="Dispara extração" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="node_process" target="node_fastapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- FastAPI -> LLM request -->
+        <mxCell id="edge_fastapi_llm" value="Envia bloco de msg" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=1.5;" edge="1" parent="1" source="node_fastapi" target="node_llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- LLM -> FastAPI response -->
+        <mxCell id="edge_llm_fastapi" value="Extrai vendas estruturadas" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=1.5;" edge="1" parent="1" source="node_llm" target="node_fastapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- FastAPI -> DB pending sales -->
+        <mxCell id="edge_fastapi_db_vendas" value="Popula vendas_pendentes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#1565c0;" edge="1" parent="1" source="node_fastapi" target="node_postgres">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Andrea -> Chrome browser -->
+        <mxCell id="edge_user_chrome" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="node_user" target="node_chrome">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Chrome -> Streamlit Dashboard -->
+        <mxCell id="edge_chrome_streamlit" value="Acessa painel de revisão" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2e7d32;" edge="1" parent="1" source="node_chrome" target="node_streamlit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Streamlit -> DB approve/reject -->
+        <mxCell id="edge_streamlit_db" value="Revisão e Aprovação&lt;br/&gt;(clientes + vendas)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;strokeColor=#2e7d32;strokeWidth=1.5;" edge="1" parent="1" source="node_streamlit" target="node_postgres">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- emitir_client.py -> SSH Tunnel -->
+        <mxCell id="edge_emitir_tunnel" value="Localhost:3999" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="node_emitir_client" target="node_ssh_tunnel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- SSH Tunnel -> DB (Secure Tunnel link) -->
+        <mxCell id="edge_tunnel_db" value="Túnel SSH" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#c62828;strokeWidth=2;dashed=1;" edge="1" parent="1" source="node_ssh_tunnel" target="node_postgres">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- emitir_client.py -> Chrome (PyAutoGUI Control) -->
+        <mxCell id="edge_emitir_chrome" value="PyAutoGUI Control" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#f57c00;" edge="1" parent="1" source="node_emitir_client" target="node_chrome">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Chrome -> Portal NFSe (Waypoints along bottom corridor to avoid Swarm services overlap) -->
+        <mxCell id="edge_chrome_gov" value="Emissão via PyAutoGUI" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#1565c0;strokeWidth=2;" edge="1" parent="1" source="node_chrome" target="node_gov">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1025" y="840" />
+              <mxPoint x="190" y="840" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

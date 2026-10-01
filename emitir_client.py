@@ -42,6 +42,7 @@ from config.settings import (
     PAUSE_BETWEEN_ACTIONS, PAGE_TRANSITION_DELAY, SCROLL_AMOUNT,
     NFSE_DESCRICAO_TEMPLATES, municipio, codtn, nbs,
 )
+from src.processors.email_validator import EmailValidator
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -120,7 +121,7 @@ def _montar_venda_dict(venda: Venda, cliente: Cliente | None) -> dict:
     return {
         "CPF":          venda.cliente_cpf,
         "RAZAO":        cliente.nome if cliente else "CLIENTE",
-        "EMAIL":        cliente.email if cliente else "",
+        "EMAIL":        (cliente.email or "") if cliente else "",
         "VALOR":        venda.valor,
         "DESCRICAO":    descricao,
         "data_emissao": date.today().strftime("%m/%Y"),
@@ -169,6 +170,26 @@ def emitir_pendentes(dry_run: bool = False) -> None:
             cliente = session.get(Cliente, v.cliente_cpf)
             vendas_dict.append(_montar_venda_dict(v, cliente))
 
+    # E-mail inválido faz o portal recusar o Tomador e o robô se perde — pula essas vendas
+    validador_email = EmailValidator()
+    validas = []
+    for v in vendas_dict:
+        if v["EMAIL"].strip() and not validador_email.validate(v["EMAIL"]):
+            sugestao = validador_email.sugestao(v["EMAIL"])
+            dica = f" (seria {sugestao}?)" if sugestao else ""
+            logger.warning(
+                f"PULADA: ID={v['_venda_id']} | {v['RAZAO']} | e-mail inválido '{v['EMAIL']}'{dica}. "
+                "Corrija o e-mail do cliente no banco e rode de novo."
+            )
+        else:
+            v["EMAIL"] = validador_email.clean(v["EMAIL"])
+            validas.append(v)
+    vendas_dict = validas
+
+    if not vendas_dict:
+        logger.info("Nenhuma venda com dados válidos para emitir.")
+        return
+
     if dry_run:
         logger.info("=== DRY RUN — nenhuma nota será emitida ===")
         for i, v in enumerate(vendas_dict, 1):
@@ -214,6 +235,10 @@ def emitir_pendentes(dry_run: bool = False) -> None:
             logger.info(f"  ✓ Emitida: {num_nota}")
         else:
             logger.warning(f"  ✗ Falha na emissão para venda ID={venda_id}.")
+
+        if emitter._abort:
+            logger.info("Execução interrompida a pedido do usuário.")
+            break
 
     # Resumo final
     ok  = sum(1 for r in resultados if r["sucesso"])

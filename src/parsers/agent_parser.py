@@ -18,6 +18,7 @@ from typing import Optional, List
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from src.database.db_manager import SessionLocal, VendaPendente, MensagensBuffer
 from src.processors.cpf_validator import CPFValidator
+from src.processors.email_validator import EmailValidator
 from config.settings import CATEGORIA_MAPPING
 from dotenv import load_dotenv
 
@@ -52,6 +53,7 @@ _EVOLUTION_KEY      = os.getenv("EVOLUTION_KEY", "")
 _PHONE       = os.getenv("PHONE", "")
 
 _cpf_validator = CPFValidator()
+_email_validator = EmailValidator()
 
 
 # ── Schemas Pydantic ─────────────────────────────────────────────────────────
@@ -59,7 +61,7 @@ _cpf_validator = CPFValidator()
 class VendaExtraction(BaseModel):
     cpf: str = Field(description="CPF do cliente. Apenas números.")
     nome: str = Field(description="Nome completo do cliente.")
-    email: str = Field(description="E-mail do cliente.")
+    email: str = Field(description="UM ÚNICO e-mail do cliente, exatamente como escrito (sem asteriscos). Se houver mais de um, NUNCA junte os dois: escolha o marcado como pessoal ou, se não houver indicação, o primeiro.")
     profissao: str = Field(description="Profissão do cliente.")
     aniversario: str = Field(description="Data de nascimento do cliente. OBRIGATÓRIO padronizar usando barras (DD/MM/AAAA). Ex: 04.08.1982 vira 04/08/1982.")
     como_conheceu: str = Field(description="Resuma OBRIGATORIAMENTE em uma das categorias: 'Indicação', 'Instagram', 'Google', Exemplo: 'Pela Mayara' vira 'Indicação'. 'Rede social' vira 'Instagram'")
@@ -200,7 +202,7 @@ def process_buffer(force: bool = False) -> None:
 
     # ── 3. Salvar vendas + validar CPFs ─────────────────────────────────────
     vendas_salvas = 0
-    avisos_cpf: list[str] = []
+    avisos: list[str] = []
 
     raw_msg_resumo = f"Buffer IDs: {buffer_ids}\n\n" + "\n---\n".join(buffer_texts)
 
@@ -216,15 +218,24 @@ def process_buffer(force: bool = False) -> None:
                 else:
                     aviso = f"⚠️ CPF inválido para {ext_venda.nome}: '{ext_venda.cpf}' — deixado em branco para correção manual."
                     logger.warning(aviso)
-                    avisos_cpf.append(aviso)
+                    avisos.append(aviso)
                     cpf_final = ""
+
+                # Validação de e-mail: mantém o valor para a Andrea corrigir na tela (a aprovação bloqueia inválidos)
+                email_limpo = _email_validator.clean(ext_venda.email)
+                if email_limpo and not _email_validator.validate(email_limpo):
+                    sugestao = _email_validator.sugestao(email_limpo)
+                    dica = f" Seria {sugestao}?" if sugestao else ""
+                    aviso = f"⚠️ E-mail inválido para {ext_venda.nome}: '{ext_venda.email}' — corrija antes de aprovar.{dica}"
+                    logger.warning(aviso)
+                    avisos.append(aviso)
 
                 pendente = VendaPendente(
                     raw_message=raw_msg_resumo,
                     mensagens_buffer_ids=json.dumps(buffer_ids),
                     cpf=cpf_final,
                     nome=ext_venda.nome,
-                    email=ext_venda.email,
+                    email=email_limpo,
                     profissao=ext_venda.profissao,
                     aniversario=ext_venda.aniversario,
                     como_conheceu=ext_venda.como_conheceu,
@@ -258,10 +269,10 @@ def process_buffer(force: bool = False) -> None:
             return
 
     # ── 4. Notificar Andrea ──────────────────────────────────────────────────
-    aviso_cpf_str = ("\n\n" + "\n".join(avisos_cpf)) if avisos_cpf else ""
+    avisos_str = ("\n\n" + "\n".join(avisos)) if avisos else ""
     _notify_whatsapp(
         f"✅ {vendas_salvas} venda(s) extraída(s) e prontas para revisão."
-        f"{aviso_cpf_str}"
+        f"{avisos_str}"
     )
 
 

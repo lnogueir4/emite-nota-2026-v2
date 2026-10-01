@@ -52,6 +52,39 @@ except Exception as e:
 
 ---
 
+### 20. Validar e-mail junto com o CPF (extração e aprovação) — ✅ implementado em 30/09/2026
+
+> Implementado com `src/processors/email_validator.py` (formato, endereço único, typos de domínio com sugestão). Diferença em relação à proposta abaixo: na extração o e-mail inválido **não** é apagado — fica no campo para a Andrea corrigir na tela, com aviso no WhatsApp; a aprovação bloqueia. E-mail vazio continua permitido (o portal não exige).
+
+**Problema (visto em 30/09/2026):** Só o CPF é validado. A cliente Clíssia informou dois e-mails no formulário e o LLM gravou os dois no mesmo campo (`a@hotmail.com / b@gmail.com`); o portal NFSe recusou e o robô travou na emissão. A Livia veio com `@hotmail.con` (erro de digitação) e passou direto.
+
+**Solução sugerida:**
+- Em `agent_parser.py`, validar o e-mail após a extração (formato + domínios com typo comum como `.con`, `gmial`); se inválido, deixar em branco e incluir no aviso do WhatsApp, igual ao CPF.
+- Instruir o LLM (descrição do campo `email` em `VendaExtraction`) a escolher **um único** e-mail quando houver mais de um.
+- Em `app_revisao.py`, bloquear o "Aprovar Venda" com e-mail inválido, junto da checagem do CPF.
+- Opcional: no `emitir_client.py`, pular (sem emitir) vendas cujo cliente tenha e-mail inválido, avisando no log.
+
+---
+
+### 21. Descrição da NFSe sai sempre genérica ("ENSAIO FOTOGRAFICO")
+
+**Problema (visto em 30/09/2026):** `emitir_client.py` busca a descrição em `NFSE_DESCRICAO_TEMPLATES` usando `venda.categoria.lower()`, mas o banco grava categorias por extenso (`Gestante`, `Newborn`, `Familia`…) e o dicionário usa chaves curtas (`gelow`, `rn`, `fami`…). Só `Natal` casa; todo o resto cai no fallback genérico.
+
+**Solução sugerida:** Mapear categoria por extenso → descrição (e usar `plano`/`PLANO_MAPPING` para distinguir Gestante VIP).
+
+---
+
+### 22. Robô de emissão: robustez
+
+**Problemas (vistos em 30/09/2026):**
+- `num_nota` nunca é capturado — fica gravado como string vazia.
+- `preparar_navegador()` abre o Chrome pela tecla Windows; se a sessão expirou, cai na tela de login com certificado e a sequência de cliques segue às cegas. Também abre janelas extras do Chrome.
+- Nenhuma checagem de que o "Avançar" realmente mudou de etapa; se o portal recusar (campo inválido), o robô continua clicando e pode digitar em outra janela.
+
+**Solução sugerida:** confirmar com o usuário (popup) que o portal está logado antes da 1ª nota; checar a etapa via screenshot/`locateOnScreen` antes de seguir; ler o número da nota na tela final.
+
+---
+
 ## 🟡 Média Prioridade — Qualidade e Rastreabilidade
 
 ### 4. Rastreabilidade: qual buffer gerou qual venda
