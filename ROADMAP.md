@@ -56,7 +56,7 @@ except Exception as e:
 
 > Implementado com `src/processors/email_validator.py` (formato, endereço único, typos de domínio com sugestão). Diferença em relação à proposta abaixo: na extração o e-mail inválido **não** é apagado — fica no campo para a Andrea corrigir na tela, com aviso no WhatsApp; a aprovação bloqueia. E-mail vazio continua permitido (o portal não exige).
 
-**Problema (visto em 30/09/2026):** Só o CPF é validado. A cliente Clíssia informou dois e-mails no formulário e o LLM gravou os dois no mesmo campo (`a@hotmail.com / b@gmail.com`); o portal NFSe recusou e o robô travou na emissão. A Livia veio com `@hotmail.con` (erro de digitação) e passou direto.
+**Problema (visto em 30/09/2026):** Só o CPF é validado. Uma cliente (cliente A) informou dois e-mails no formulário e o LLM gravou os dois no mesmo campo (`a@hotmail.com / b@gmail.com`); o portal NFSe recusou e o robô travou na emissão. Outra (cliente B) veio com `@hotmail.con` (erro de digitação) e passou direto.
 
 **Solução sugerida:**
 - Em `agent_parser.py`, validar o e-mail após a extração (formato + domínios com typo comum como `.con`, `gmial`); se inválido, deixar em branco e incluir no aviso do WhatsApp, igual ao CPF.
