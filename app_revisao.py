@@ -106,6 +106,8 @@ else:
                     elif email.strip() and not validador_email.validate(email):
                         st.error("E-mail inválido! Por favor corrija o e-mail antes de aprovar.")
                     else:
+                        # Grava o CPF só com dígitos, mesmo se digitado com pontos/traço
+                        cpf = validador.clean(cpf)
                         email = validador_email.clean(email)
                         cliente = session.query(Cliente).filter(Cliente.cpf == cpf).first()
                         if not cliente:
