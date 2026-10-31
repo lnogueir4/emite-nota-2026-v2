@@ -114,8 +114,13 @@ def _notify_whatsapp(text: str) -> None:
         logger.warning("Notificação WhatsApp não configurada (EVOLUTION_URL/INSTANCE/KEY/PHONE ausentes).")
         return
     try:
+        clean_url = _EVOLUTION_URL.rstrip('/')
+        if "/message/sendText" in clean_url:
+            clean_url = clean_url.split("/message/sendText")[0]
+        url = f"{clean_url}/message/sendText/{_EVOLUTION_INSTANCE}"
+
         resp = requests.post(
-            f"{_EVOLUTION_URL}/message/sendText/{_EVOLUTION_INSTANCE}",
+            url,
             json={"number": _PHONE, "text": text},
             headers={"apikey": _EVOLUTION_KEY},
             timeout=10,
@@ -209,7 +214,25 @@ def process_buffer(force: bool = False) -> None:
     with SessionLocal() as session:
         try:
             for ext_venda in result.vendas:
-                categoria_final = ext_venda.categoria or inferir_categoria(ext_venda.plano)
+                plano_lower = str(ext_venda.plano).lower()
+
+                # Forçar categorias baseadas em palavras-chave fortes do plano
+                if "feminino" in plano_lower or "femi" in plano_lower:
+                    categoria_final = "Feminino"
+                elif "mãe" in plano_lower or "maes" in plano_lower:
+                    categoria_final = "Mães"
+                elif "corporativo" in plano_lower or "corp" in plano_lower:
+                    categoria_final = "Corporativo"
+                elif "formatura" in plano_lower or "forma" in plano_lower:
+                    categoria_final = "Formatura"
+                elif "natal" in plano_lower:
+                    categoria_final = "Natal"
+                else:
+                    categoria_final = ext_venda.categoria or inferir_categoria(ext_venda.plano)
+
+                # Normalização final de segurança para alinhar com o banco e Streamlit
+                if categoria_final in ["Dia das Mães", "Dias das Mães"]:
+                    categoria_final = "Mães"
 
                 # Validação de CPF antes de salvar
                 cpf_limpo = _cpf_validator.clean(ext_venda.cpf)
